@@ -4,11 +4,6 @@ class Kicadmeta < Formula
   head "lp:kicad", :using => :bzr 
 
   option "without-menu-icons", "Build without icons menus."
-  option "with-default-paths", "Do not alter KiCad's file paths."
-  option "with-new-icons", "Pull in the new icon package."
-  option "with-defaults-patch", "My own patch to make sensible design rules be filled in for new pcbnew files."
-  option "with-new-3d", "Pull in new 3D viewer branch."
-
   depends_on "bazaar" => :build
   depends_on "boost"
   depends_on "cairo"
@@ -66,46 +61,11 @@ class Kicadmeta < Formula
       ENV.libcxx
     end
 
-    if build.without? "default-paths"
-      inreplace "common/common.cpp", "/Library/Application Support/kicad", "#{etc}/kicad"
-      inreplace "common/common.cpp", "wxStandardPaths::Get().GetUserConfigDir()", "wxT( \"#{etc}/kicad\" )"
-      inreplace "common/pgm_base.cpp", "DEFAULT_INSTALL_PATH", "\"#{etc}/kicad\""
-    end
+    # inreplace "3d-viewer/3d_cache/sg/CMakeLists.txt", "KICAD_LIB", "KICAD_BIN"
+    # inreplace "plugins/3d/idf/CMakeLists.txt", "KICAD_USER_PLUGIN", "KICAD_BIN"
+    # inreplace "plugins/3d/vrml/CMakeLists.txt", "KICAD_USER_PLUGIN", "KICAD_BIN"
 
-      #inreplace "3d-viewer/3d_cache/sg/CMakeLists.txt", "KICAD_LIB", "KICAD_BIN"
-     # inreplace "plugins/3d/idf/CMakeLists.txt", "KICAD_USER_PLUGIN", "KICAD_BIN"
-     #  inreplace "plugins/3d/vrml/CMakeLists.txt", "KICAD_USER_PLUGIN", "KICAD_BIN"
-
-     resource("wxk").stage do
-    #   (Pathname.pwd).install resource("wxpatch")
-    #   safe_system "/usr/bin/patch", "-g", "0", "-f", "-d", Pathname.pwd, "-p1", "-i", "wxp.patch"
-
-    #   mkdir "wx-build" do
-    #     args = [
-    #       "--prefix=#{buildpath/"wxk"}",
-    #       "--with-opengl",
-    #       "--enable-aui",
-    #       "--enable-utf8",
-    #       "--enable-html",
-    #       "--enable-stl",
-    #       "--with-libjpeg=builtin",
-    #       "--with-libpng=builtin",
-    #       "--with-regex=builtin",
-    #       "--with-libtiff=builtin",
-    #       "--with-zlib=builtin",
-    #       "--with-expat=builtin",
-    #       "--without-liblzma",
-    #       "--with-macosx-version-min=#{MacOS.version}",
-    #       "--enable-universal_binary=i386,x86_64",
-    #       "CC=#{ENV.cc}",
-    #       "CXX=#{ENV.cxx}",
-    #     ]
-
-    #     system "../configure", *args
-    #     system "make", "-j#{ENV.make_jobs}"
-    #     system "make", "install"
-    #   end
-
+    resource("wxk").stage do
       if build.with? "python"
         cd "wxPython" do
           args = [
@@ -171,30 +131,8 @@ class Kicadmeta < Formula
     etc/"kicad"
   end
 
-  def post_install
-    if build.without? "default-paths"
-      kicaddir.mkpath
-      resource("kicad-library").stage do
-        cp_r Dir["*"], kicaddir
-      end
-    end
-  end
-
   def caveats
-    s = ""
-    if build.without? "default-paths"
-      s += <<-EOS.undent
-
-      KiCad component libraries and preferences are located in:
-        #{kicaddir}
-
-      Component libraries have been setup for you, but
-      footprints and 3D models must be downloaded from
-      within Pcbnew.  It will automatically guide you
-      through this process upon first lauch.
-      EOS
-    else
-      s += <<-EOS.undent
+    s += <<-EOS.undent
 
       KiCad component libraries must be installed manually in:
         /Library/Application Support/kicad
@@ -203,7 +141,6 @@ class Kicadmeta < Formula
         sudo git clone https://github.com/KiCad/kicad-library.git \
           /Library/Application\ Support/kicad
       EOS
-    end
 
     s
   end
@@ -269,10 +206,37 @@ index a804e9e..c3e128d 100644
      gost_portrait.kicad_wks
      pagelayout_default.kicad_wks
 diff --git a/template/kicad.pro b/template/kicad.pro
-index 804cf83..5cef6e8 100644
+index 804cf83..9f7194d 100644
 --- a/template/kicad.pro
 +++ b/template/kicad.pro
-@@ -60,3 +60,15 @@ LibName26=opto
+@@ -1,4 +1,4 @@
+-update=22/05/2015 07:44:53
++update=Thursday, 27 August 2015 'amt' 10:17:31
+ version=1
+ last_client=kicad
+ [general]
+@@ -13,13 +13,13 @@ PadDrill=0.600000000000
+ PadDrillOvalY=0.600000000000
+ PadSizeH=1.500000000000
+ PadSizeV=1.500000000000
+-PcbTextSizeV=1.500000000000
+-PcbTextSizeH=1.500000000000
+-PcbTextThickness=0.300000000000
+-ModuleTextSizeV=1.000000000000
+-ModuleTextSizeH=1.000000000000
+-ModuleTextSizeThickness=0.150000000000
+-SolderMaskClearance=0.000000000000
++PcbTextSizeV=0.800000000000
++PcbTextSizeH=0.800000000000
++PcbTextThickness=0.1250000000000
++ModuleTextSizeV=0.800000000000
++ModuleTextSizeH=0.800000000000
++ModuleTextSizeThickness=0.125000000000
++SolderMaskClearance=0.1012000000000
+ SolderMaskMinWidth=0.000000000000
+ DrawSegmentWidth=0.200000000000
+ BoardOutlineThickness=0.100000000000
+@@ -60,3 +60,69 @@ LibName26=opto
  LibName27=atmel
  LibName28=contrib
  LibName29=valves
@@ -287,12 +251,66 @@ index 804cf83..5cef6e8 100644
 +LibName38=w_rtx
 +LibName39=w_transistor
 +LibName40=w_vacuum
-+LibName41=collieparts
++LibName41=power_w
++LibName42=collieparts
++LibName43=power_2
++LibName44=nxp_armmcu
++LibName45=onsemi
++LibName46=powerint
++LibName47=pspice
++LibName48=references
++LibName49=relays
++LibName50=rfcom
++LibName51=sensors
++LibName52=silabs
++LibName53=stm8
++LibName54=stm32
++LibName55=supertex
++LibName56=switches
++LibName57=transf
++LibName58=ttl_ieee
++LibName59=video
++LibName60=74xgxx
++LibName61=ac-dc
++LibName62=actel
++LibName63=brooktre
++LibName64=cmos_ieee
++LibName65=dc-dc
++LibName66=elec-unifil
++LibName67=ftdi
++LibName68=gennum
++LibName69=graphic
++LibName70=hc11
++LibName71=ir
++LibName72=logo
++LibName73=microchip_pic10mcu
++LibName74=microchip_pic12mcu
++LibName75=microchip_pic16mcu
++LibName76=microchip_pic18mcu
++LibName77=microchip_pic32mcu
++LibName78=motor_drivers
++LibName79=msp430
++LibName80=nordicsemi
++LibName81=analog_devices
++LibName82=diode
++LibName83=ESD_Protection
++LibName84=Lattice
++LibName85=maxim
++LibName86=microchip_dspic33dsc
++LibName87=Oscillators
++LibName88=Power_Management
++LibName89=Xicor
++LibName90=Zilog
++LibName91=Altera
++LibName92=16C754
++LibName93=dips-s
++LibName94=s5038
++LibName95=usb-b
 diff --git a/template/kicad.kicad_pcb b/template/kicad.kicad_pcb
 index e69de29..8ef89d4 100644
 --- a/template/kicad.kicad_pcb
 +++ b/template/kicad.kicad_pcb
-@@ -0,0 +1,118 @@
+@@ -0,0 +1,123 @@
 +(kicad_pcb (version 4) (host pcbnew "(2014-09-28 BZR 5153)-product")
 +
 +  (general
@@ -334,36 +352,41 @@ index e69de29..8ef89d4 100644
 +  (setup
 +    (last_trace_width 0.254)
 +    (user_trace_width 0.1524)
-+    (user_trace_width 0.2)
-+    (user_trace_width 0.25)
-+    (user_trace_width 0.3)
-+    (user_trace_width 0.4)
-+    (user_trace_width 0.5)
-+    (user_trace_width 0.6)
-+    (user_trace_width 0.8)
-+    (user_trace_width 1)
-+    (user_trace_width 1.2)
-+    (user_trace_width 1.5)
-+    (user_trace_width 2)
++    (user_trace_width 0.2032)
++    (user_trace_width 0.254)
++    (user_trace_width 0.3048)
++    (user_trace_width 0.381)
++    (user_trace_width 0.4572)
++    (user_trace_width 0.508)
++    (user_trace_width 0.635)
++    (user_trace_width 0.7112)
++    (user_trace_width 0.8128)
++    (user_trace_width 0.9144)
++    (user_trace_width 1.27)
 +    (trace_clearance 0.1524)
 +    (zone_clearance 0.1524)
 +    (zone_45_only yes)
 +    (trace_min 0.1524)
 +    (segment_width 0.127)
 +    (edge_width 0.127)
-+    (via_size 0.6096)
++    (via_size 0.6858)
 +    (via_drill 0.3302)
-+    (via_min_size 0.6096)
++    (via_min_size 0.6858)
 +    (via_min_drill 0.3302)
-+    (uvia_size 0.6096)
++    (user_via 0.8636 0.508)
++    (user_via 0.9906 0.635)
++    (user_via 1.0922 0.7366)
++    (user_via 1.2446 0.889)
++    (user_via 1.3716 1.016)
++    (uvia_size 0.6858)
 +    (uvia_drill 0.3302)
 +    (uvias_allowed no)
-+    (uvia_min_size 0.6096)
++    (uvia_min_size 0.6858)
 +    (uvia_min_drill 0.3302)
 +    (pcb_text_width 0.127)
-+    (pcb_text_size 0.6 0.6)
++    (pcb_text_size 0.8 0.8)
 +    (mod_edge_width 0.127)
-+    (mod_text_size 0.6 0.6)
++    (mod_text_size 0.8 0.8)
 +    (mod_text_width 0.127)
 +    (pad_size 1.524 1.524)
 +    (pad_drill 0.762)
@@ -372,8 +395,8 @@ index e69de29..8ef89d4 100644
 +    (aux_axis_origin 0 0)
 +    (visible_elements FFFFFF7F)
 +    (pcbplotparams
-+      (layerselection 0x3ffff_80000001)
-+      (usegerberextensions true)
++      (layerselection 0x010f0_ffffffff)
++      (usegerberextensions false)
 +      (usegerberattributes true)
 +      (excludeedgelayer true)
 +      (linewidth 0.127000)
@@ -401,12 +424,12 @@ index e69de29..8ef89d4 100644
 +
 +  (net 0 "")
 +
-+  (net_class Default "This is the standaard class."
++  (net_class Default "This is the standard class."
 +    (clearance 0.1524)
 +    (trace_width 0.1524)
-+    (via_dia 0.6096)
++    (via_dia 0.6858)
 +    (via_drill 0.3302)
-+    (uvia_dia 0.6096)
++    (uvia_dia 0.6858)
 +    (uvia_drill 0.3302)
 +  )
 +
