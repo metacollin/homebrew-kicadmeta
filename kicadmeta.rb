@@ -132,7 +132,7 @@ class Kicadmeta < Formula
   end
 
   def caveats
-    s += <<-EOS.undent
+    s = <<-EOS.undent
 
       KiCad component libraries must be installed manually in:
         /Library/Application Support/kicad
@@ -151,6 +151,21 @@ class Kicadmeta < Formula
 end
 
 __END__
+diff --git a/include/gal/opengl/opengl_gal.h b/include/gal/opengl/opengl_gal.h
+index 83598ba..27debf1 100644
+--- a/include/gal/opengl/opengl_gal.h
++++ b/include/gal/opengl/opengl_gal.h
+@@ -254,8 +254,8 @@ private:
+     /// Super class definition
+     typedef GAL super;
+
+-    static const int    CIRCLE_POINTS   = 64;   ///< The number of points for circle approximation
+-    static const int    CURVE_POINTS    = 32;   ///< The number of points for curve approximation
++    static const int    CIRCLE_POINTS   = 256;   ///< The number of points for circle approximation
++    static const int    CURVE_POINTS    = 128;   ///< The number of points for curve approximation
+
+     wxClientDC*             clientDC;               ///< Drawing context
+     static wxGLContext*     glContext;              ///< OpenGL context of wxWidgets
 diff --git a/common/project.cpp b/common/project.cpp
 index ebf8f13..9a706a0 100644
 --- a/common/project.cpp
