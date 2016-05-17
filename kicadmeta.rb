@@ -4,6 +4,9 @@ class Kicadmeta < Formula
   head "lp:kicad", :using => :bzr 
 
   option "without-menu-icons", "Build without icons menus."
+  option "with-wx31", "Build with wx 3.1.0."
+  option "with-python"
+
   depends_on "bazaar" => :build
   depends_on "boost"
   depends_on "cairo"
@@ -26,7 +29,8 @@ class Kicadmeta < Formula
   depends_on "swig" => :build if build.with? "python"
   depends_on "xz"
   depends_on "glm"
-  depends_on "wxkicad"
+  depends_on "wxkicad" if build.without? "wx31"
+  depends_on "wxkicad31" if build.with? "wx31"
 
   fails_with :gcc
   fails_with :llvm
@@ -37,19 +41,27 @@ class Kicadmeta < Formula
   # so KiCad, as part of its build system, builds its own wx binaries with these fixes included.  It uses a bash script
   # for this, so I have simply concatenated all the patches into one patch to make it fit better into homebrew.  These
   # Patches are the ones that come from the stable release archive of KiCad under the patches directory.
-  # resource "wxpatch" do
-  #   url "https://gist.githubusercontent.com/metacollin/2d5760743df73c939d53/raw/b25008a92c8f518df582ad88d266dcf2d75f9d12/wxp.patch"
+   #resource "wxpatch" do
+    # url "https://gist.githubusercontent.com/metacollin/2d5760743df73c939d53/raw/b25008a92c8f518df582ad88d266dcf2d75f9d12/wxp.patch"
   #   sha256 "0a19c475ded29186683a9e7f7d9316e4cbea4db7b342f599cee0e116fa019f3e"
   # end
 
-  resource "wxk" do
-    url "https://downloads.sourceforge.net/project/wxpython/wxPython/3.0.2.0/wxPython-src-3.0.2.0.tar.bz2"
-    sha256 "d54129e5fbea4fb8091c87b2980760b72c22a386cb3b9dd2eebc928ef5e8df61"
+  if build.with? "wx31"
+    if build.with? "python"
+    odie "Options --with-wx31 and --with-python are mutually exclusive."
+  end
+end
+
+  if build.with? "python"
+    resource "wxk" do
+      url "https://downloads.sourceforge.net/project/wxpython/wxPython/3.0.2.0/wxPython-src-3.0.2.0.tar.bz2"
+      sha256 "d54129e5fbea4fb8091c87b2980760b72c22a386cb3b9dd2eebc928ef5e8df61"
+    end
   end
 
-  resource "kicad-library" do
-    url "https://github.com/KiCad/kicad-library.git"
-  end
+  #resource "kicad-library" do
+  #  url "https://github.com/KiCad/kicad-library.git"
+  #end
 
   def install
     ENV["MAC_OS_X_VERSION_MIN_REQUIRED"] = "#{MacOS.version}"
@@ -64,9 +76,8 @@ class Kicadmeta < Formula
     # inreplace "3d-viewer/3d_cache/sg/CMakeLists.txt", "KICAD_LIB", "KICAD_BIN"
     # inreplace "plugins/3d/idf/CMakeLists.txt", "KICAD_USER_PLUGIN", "KICAD_BIN"
     # inreplace "plugins/3d/vrml/CMakeLists.txt", "KICAD_USER_PLUGIN", "KICAD_BIN"
-
-    resource("wxk").stage do
-      if build.with? "python"
+    if build.with? "python"
+      resource("wxk").stage do
         cd "wxPython" do
           args = [
             "WXPORT=osx_cocoa",
@@ -89,11 +100,16 @@ class Kicadmeta < Formula
       args = %W[
         -DCMAKE_INSTALL_PREFIX=#{prefix}
         -DCMAKE_OSX_DEPLOYMENT_TARGET=#{MacOS.version}
-        -DwxWidgets_CONFIG_EXECUTABLE=#{Formula["wxkicad"].bin}/wx-config
         -DKICAD_REPO_NAME=brewed_product
         -DKICAD_SKIP_BOOST=ON
         -DBoost_USE_STATIC_LIBS=ON
       ]
+
+      if build.with? "wx31"
+         args << "-DwxWidgets_CONFIG_EXECUTABLE=#{Formula["wxkicad31"].bin}/wx-config"
+       else
+         args << "-DwxWidgets_CONFIG_EXECUTABLE=#{Formula["wxkicad"].bin}/wx-config"
+       end
 
       if build.with? "debug"
         args << "-DCMAKE_BUILD_TYPE=Debug"
