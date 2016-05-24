@@ -1,7 +1,7 @@
 class Kicadmeta < Formula
   desc "Electronic Design Automation Suite"
   homepage "http://www.kicad-pcb.org"
-  head "lp:kicad", :using => :bzr 
+  head "lp:kicad", :using => :bzr
 
   option "without-menu-icons", "Build without icons menus."
   option "with-wx31", "Build with wx 3.1.0."
@@ -173,16 +173,16 @@ index ebf8f13..9a706a0 100644
 +++ b/common/project.cpp
 @@ -227,6 +227,7 @@ static bool copy_pro_file_template( const SEARCH_STACK& aSearchS, const wxString
      }
- 
+
      wxString templateFile = wxT( "kicad." ) + ProjectFileExtension;
 +    wxString pcbFile = wxT( "kicad." ) + KiCadPcbFileExtension;
- 
+
      wxString kicad_pro_template = aSearchS.FindValidPath( templateFile );
- 
+
 @@ -253,6 +254,9 @@ static bool copy_pro_file_template( const SEARCH_STACK& aSearchS, const wxString
- 
+
      DBG( printf( "%s: using template file '%s' as project file.\n", __func__, TO_UTF8( kicad_pro_template ) );)
- 
+
 +
 +    wxString kicad_pcb_template = aSearchS.FindValidPath( pcbFile );
 +
@@ -191,7 +191,7 @@ index ebf8f13..9a706a0 100644
      // of stupid message
 @@ -260,7 +264,20 @@ static bool copy_pro_file_template( const SEARCH_STACK& aSearchS, const wxString
      bool success = true;
- 
+
      if( fn.IsOk() && fn.IsDirWritable() )
 +    {
          success = wxCopyFile( kicad_pro_template, aDestination );
@@ -205,7 +205,7 @@ index ebf8f13..9a706a0 100644
 +            aDest.Replace(ProjectFileExtension, KiCadPcbFileExtension);
 +            wxCopyFile( kicad_pcb_template, aDest);
 +        }
-+        
++
 +    }
      else
      {
