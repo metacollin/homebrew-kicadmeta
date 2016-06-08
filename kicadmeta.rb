@@ -29,8 +29,8 @@ class Kicadmeta < Formula
   depends_on "swig" => :build if build.with? "python"
   depends_on "xz"
   depends_on "glm"
-  depends_on "wxkicad" if build.without? "wx31"
-  depends_on "wxkicad31" if build.with? "wx31"
+  depends_on "metacollin/kicadmeta/wxkicad" if build.without? "wx31"
+  depends_on "metacollin/kicadmeta/wxkicad31" if build.with? "wx31"
 
   fails_with :gcc
   fails_with :llvm
@@ -81,9 +81,9 @@ end
         cd "wxPython" do
           args = [
             "WXPORT=osx_cocoa",
-            "WX_CONFIG=#{Formula["wxkicad"].bin}/wx-config",
+            "WX_CONFIG=#{Formula["metacollin/kicadmeta/wxkicad"].bin}/wx-config",
             "UNICODE=1",
-            "BUILD_BASE=#{Formula["wxkicad"]}/wx-build",
+            "BUILD_BASE=#{Formula["metacollin/kicadmeta/wxkicad"]}/wx-build",
           ]
 
           system "python", "setup.py", "build_ext", *args
@@ -106,9 +106,9 @@ end
       ]
 
       if build.with? "wx31"
-         args << "-DwxWidgets_CONFIG_EXECUTABLE=#{Formula["wxkicad31"].bin}/wx-config"
+         args << "-DwxWidgets_CONFIG_EXECUTABLE=#{Formula["metacollin/kicadmeta/wxkicad"].bin}/wx-config"
        else
-         args << "-DwxWidgets_CONFIG_EXECUTABLE=#{Formula["wxkicad"].bin}/wx-config"
+         args << "-DwxWidgets_CONFIG_EXECUTABLE=#{Formula["metacollin/kicadmeta/wxkicad"].bin}/wx-config"
        end
 
       if build.with? "debug"
