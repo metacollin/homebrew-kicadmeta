@@ -2,10 +2,10 @@ class Kicadmeta < Formula
   desc "Electronic Design Automation Suite"
   homepage "http://www.kicad-pcb.org"
   head "lp:kicad", :using => :bzr
-
   option "without-menu-icons", "Build without icons menus."
   option "with-wx31", "Build with wx 3.1.0."
   option "with-python"
+  option "with-nice-curves", "Nicer curves."
 
   depends_on "bazaar" => :build
   depends_on "boost"
@@ -71,6 +71,25 @@ end
       ENV.libstdcxx
     else
       ENV.libcxx
+    end
+
+    if build.with? "nice-curves"
+      inreplace "gerbview/dcode.cpp", "define SEGS_CNT 32", "define SEGS_CNT 128"
+      inreplace "gerbview/export_to_pcbnew.cpp", "SEG_COUNT_CIRCLE    16", "SEG_COUNT_CIRCLE    128"
+      inreplace "gerbview/class_aperture_macro.cpp", "const int seg_per_circle = 64", "const int seg_per_circle = 256"
+      inreplace "common/geometry/shape_poly_set.cpp", "define SEG_CNT_MAX 64", "define SEG_CNT_MAX 128"
+      inreplace "pcbnew/pcbnew.h", "define ARC_APPROX_SEGMENTS_COUNT_LOW_DEF 16", "define ARC_APPROX_SEGMENTS_COUNT_LOW_DEF 60"
+      inreplace "pcbnew/pcbnew.h", "define ARC_APPROX_SEGMENTS_COUNT_HIGHT_DEF 32", "define ARC_APPROX_SEGMENTS_COUNT_HIGHT_DEF 128"
+      inreplace "pcbnew/pcbnew.h", "TEXTS_MIN_SIZE  Mils2iu( 5 )", "TEXTS_MIN_SIZE  Mils2iu( 1 )"
+      inreplace "pcbnew/class_pad_draw_functions.cpp", "define SEGCOUNT 32", "define SEGCOUNT 64"
+      inreplace "common/common_plotDXF_functions.cpp", "const int segmentToCircleCount = 64;", "const int segmentToCircleCount = 512;"
+      inreplace "common/common_plotGERBER_functions.cpp", "const int segmentToCircleCount = 64;", "const int segmentToCircleCount = 512;"
+      inreplace "common/common_plotHPGL_functions.cpp", "const int segmentToCircleCount = 32;", "const int segmentToCircleCount = 256;"
+      inreplace "common/common_plotPS_functions.cpp", "const int segmentToCircleCount = 64;", "const int segmentToCircleCount = 512;"
+      inreplace "include/gal/opengl/opengl_gal.h", "static const int    CIRCLE_POINTS   = 64;", "static const int    CIRCLE_POINTS   = 256;"
+      inreplace "include/gal/opengl/opengl_gal.h", "static const int    CURVE_POINTS    = 32;", "static const int    CURVE_POINTS    = 128;"
+      inreplace "common/class_plotter.cpp", "const int delta = 50;", "const int delta = 25;"
+      inreplace "3d-viewer/3d_canvas.h", "void setGLSolderMaskColor( float aTransparency = 1.0 );", "void setGLSolderMaskColor( float aTransparency = 0.7 );"
     end
 
     # inreplace "3d-viewer/3d_cache/sg/CMakeLists.txt", "KICAD_LIB", "KICAD_BIN"
