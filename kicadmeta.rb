@@ -6,6 +6,7 @@ class Kicadmeta < Formula
   option "with-wx31", "Build with wx 3.1.0."
   option "with-python"
   option "with-nice-curves", "Nicer curves."
+  option "with-openmp", "Use OpenMP for multiprocessing support."
 
   depends_on "bazaar" => :build
   depends_on "boost"
@@ -31,6 +32,7 @@ class Kicadmeta < Formula
   depends_on "glm"
   depends_on "metacollin/kicadmeta/wxkicad" if build.without? "wx31"
   depends_on "metacollin/kicadmeta/wxkicad31" if build.with? "wx31"
+  depends_on "llvm" => %w{with-toolchain with-shared-libs} if build.with? "openmp"
 
   fails_with :gcc
   fails_with :llvm
@@ -73,6 +75,11 @@ end
       ENV.libcxx
     end
 
+    if build.with? "openmp"
+      ENV.append "LDFLAGS", "-L/usr/local/opt/llvm/lib -Wl,-rpath,/usr/local/opt/llvm/lib"
+      ENV.append "CPPFLAGS", "-I/usr/local/opt/llvm/include"
+    end
+
     if build.with? "nice-curves"
       inreplace "gerbview/dcode.cpp", "define SEGS_CNT 32", "define SEGS_CNT 128"
       inreplace "gerbview/export_to_pcbnew.cpp", "SEG_COUNT_CIRCLE    16", "SEG_COUNT_CIRCLE    128"
@@ -89,7 +96,8 @@ end
       inreplace "include/gal/opengl/opengl_gal.h", "static const int    CIRCLE_POINTS   = 64;", "static const int    CIRCLE_POINTS   = 256;"
       inreplace "include/gal/opengl/opengl_gal.h", "static const int    CURVE_POINTS    = 32;", "static const int    CURVE_POINTS    = 128;"
       inreplace "common/class_plotter.cpp", "const int delta = 50;", "const int delta = 25;"
-      inreplace "3d-viewer/3d_canvas.h", "void setGLSolderMaskColor( float aTransparency = 1.0 );", "void setGLSolderMaskColor( float aTransparency = 0.7 );"
+      inreplace "3d-viewer/3d_canvas/cinfo3d_visu.cpp", "#define MIN_SEG_PER_CIRCLE 12", "#define MIN_SEG_PER_CIRCLE 64"
+      inreplace "3d-viewer/3d_canvas/cinfo3d_visu.cpp", "#define MAX_SEG_PER_CIRCLE 48", "#define MAX_SEG_PER_CIRCLE 256"
     end
 
     # inreplace "3d-viewer/3d_cache/sg/CMakeLists.txt", "KICAD_LIB", "KICAD_BIN"
@@ -149,8 +157,14 @@ end
         args << "-DKICAD_SCRIPTING_MODULES=OFF"
         args << "-DKICAD_SCRIPTING_WXPYTHON=OFF"
       end
-      args << "-DCMAKE_C_COMPILER=#{ENV.cc}"
-      args << "-DCMAKE_CXX_COMPILER=#{ENV.cxx}"
+
+      if build.with? "openmp"
+        args << "-DCMAKE_C_COMPILER=/usr/local/opt/llvm/bin/clang-3.8"
+        args << "_DCMAKE_CXX_COMPILER=/usr/local/opt/llvm/bin/clang-3.8"
+      else
+        args << "-DCMAKE_C_COMPILER=#{ENV.cc}"
+        args << "-DCMAKE_CXX_COMPILER=#{ENV.cxx}"
+      end
 
       if build.with? "menu-icons"
         args << "-DUSE_IMAGES_IN_MENUS=ON"
