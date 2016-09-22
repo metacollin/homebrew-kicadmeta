@@ -1,14 +1,13 @@
 class Kicadmeta < Formula
   desc "Electronic Design Automation Suite"
   homepage "http://www.kicad-pcb.org"
-  head "lp:kicad", :using => :bzr
+  head "https://git.launchpad.net/kicad", :using => :git
   option "without-menu-icons", "Build without icons menus."
   option "with-wx31", "Build with wx 3.1.0."
   option "with-python"
   option "with-nice-curves", "Nicer curves."
   option "with-openmp", "Use OpenMP for multiprocessing support."
 
-  depends_on "bazaar" => :build
   depends_on "boost"
   depends_on "cairo"
   depends_on "cmake" => :build
@@ -69,6 +68,8 @@ end
     ENV["MAC_OS_X_VERSION_MIN_REQUIRED"] = "#{MacOS.version}"
     ENV.append "ARCHFLAGS", "-Wunused-command-line-argument-hard-error-in-future"
     ENV.append "LDFLAGS", "-headerpad_max_install_names"
+    ENV["SDKROOT"] = "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.11.sdk"
+
     if MacOS.version < :mavericks
       ENV.libstdcxx
     else
@@ -78,23 +79,35 @@ end
     if build.with? "openmp"
       ENV.append "LDFLAGS", "-L/usr/local/opt/llvm/lib -Wl,-rpath,/usr/local/opt/llvm/lib"
       ENV.append "CPPFLAGS", "-I/usr/local/opt/llvm/include"
+      ENV["CC"] = "/usr/local/opt/llvm/bin/clang"
+      EMV["CXX"] = "/usr/local/opt/llvm/bin/clang++"
     end
 
+
+
+    ##!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!#!##
+    ## Note: I have personally had several boards manufactured using gerbers generated with these settings, so these have been tested  ##
+    ## in a production environment.                                                                                                    ##
+    ##                                                                                                                                 ##
+    ## Even certain overly picky manufacturers with old machines didn't have any problems with the increased file size.                ##
+    ##                                                                                                                                 ##
+    ## However, this is not an indication it will work for you or won't break or ruin your boards.  Use at your own risk and liability.##
+    ## - metacollin #####################################################################################################################
     if build.with? "nice-curves"
       inreplace "gerbview/dcode.cpp", "define SEGS_CNT 32", "define SEGS_CNT 128"
       inreplace "gerbview/export_to_pcbnew.cpp", "SEG_COUNT_CIRCLE    16", "SEG_COUNT_CIRCLE    128"
       inreplace "gerbview/class_aperture_macro.cpp", "const int seg_per_circle = 64", "const int seg_per_circle = 256"
       inreplace "common/geometry/shape_poly_set.cpp", "define SEG_CNT_MAX 64", "define SEG_CNT_MAX 128"
-      inreplace "pcbnew/pcbnew.h", "define ARC_APPROX_SEGMENTS_COUNT_LOW_DEF 16", "define ARC_APPROX_SEGMENTS_COUNT_LOW_DEF 60"
-      inreplace "pcbnew/pcbnew.h", "define ARC_APPROX_SEGMENTS_COUNT_HIGHT_DEF 32", "define ARC_APPROX_SEGMENTS_COUNT_HIGHT_DEF 128"
+      inreplace "pcbnew/pcbnew.h", "define ARC_APPROX_SEGMENTS_COUNT_LOW_DEF 16", "define ARC_APPROX_SEGMENTS_COUNT_LOW_DEF 30"
+      inreplace "pcbnew/pcbnew.h", "define ARC_APPROX_SEGMENTS_COUNT_HIGHT_DEF 32", "define ARC_APPROX_SEGMENTS_COUNT_HIGHT_DEF 64"
       inreplace "pcbnew/pcbnew.h", "TEXTS_MIN_SIZE  Mils2iu( 5 )", "TEXTS_MIN_SIZE  Mils2iu( 1 )"
       inreplace "pcbnew/class_pad_draw_functions.cpp", "define SEGCOUNT 32", "define SEGCOUNT 64"
       inreplace "common/common_plotDXF_functions.cpp", "const int segmentToCircleCount = 64;", "const int segmentToCircleCount = 512;"
       inreplace "common/common_plotGERBER_functions.cpp", "const int segmentToCircleCount = 64;", "const int segmentToCircleCount = 512;"
       inreplace "common/common_plotHPGL_functions.cpp", "const int segmentToCircleCount = 32;", "const int segmentToCircleCount = 256;"
       inreplace "common/common_plotPS_functions.cpp", "const int segmentToCircleCount = 64;", "const int segmentToCircleCount = 512;"
-      inreplace "include/gal/opengl/opengl_gal.h", "static const int    CIRCLE_POINTS   = 64;", "static const int    CIRCLE_POINTS   = 256;"
-      inreplace "include/gal/opengl/opengl_gal.h", "static const int    CURVE_POINTS    = 32;", "static const int    CURVE_POINTS    = 128;"
+      inreplace "include/gal/opengl/opengl_gal.h", "static const int    CIRCLE_POINTS   = 64;", "static const int    CIRCLE_POINTS   = 128;"
+      inreplace "include/gal/opengl/opengl_gal.h", "static const int    CURVE_POINTS    = 32;", "static const int    CURVE_POINTS    = 64;"
       inreplace "common/class_plotter.cpp", "const int delta = 50;", "const int delta = 25;"
       inreplace "3d-viewer/3d_canvas/cinfo3d_visu.cpp", "#define MIN_SEG_PER_CIRCLE 12", "#define MIN_SEG_PER_CIRCLE 64"
       inreplace "3d-viewer/3d_canvas/cinfo3d_visu.cpp", "#define MAX_SEG_PER_CIRCLE 48", "#define MAX_SEG_PER_CIRCLE 256"
@@ -108,16 +121,23 @@ end
         cd "wxPython" do
           args = [
             "WXPORT=osx_cocoa",
-            "WX_CONFIG=#{Formula["metacollin/kicadmeta/wxkicad"].bin}/wx-config",
             "UNICODE=1",
-            "BUILD_BASE=#{Formula["metacollin/kicadmeta/wxkicad"]}/wx-build",
           ]
+
+          if build.with? "debug"
+            args << "WX_CONFIG=#{Formula["metacollin/kicadmeta/wxkdebug"].bin}/wx-config"
+            args << "BUILD_BASE=#{Formula["metacollin/kicadmeta/wxkdebug"]}/wx-build"
+          else
+            args << "WX_CONFIG=#{Formula["metacollin/kicadmeta/wxkicad"].bin}/wx-config"
+            args << "BUILD_BASE=#{Formula["metacollin/kicadmeta/wxkicad"]}/wx-build"
+          end
 
           system "python", "setup.py", "build_ext", *args
           system "python", "setup.py", "install", "--prefix=#{buildpath}/py", *args
         end
       end
     end
+
 
     mkdir "build" do
       if build.with? "python"
@@ -132,17 +152,13 @@ end
         -DBoost_USE_STATIC_LIBS=ON
       ]
 
-      if build.with? "wx31"
-         args << "-DwxWidgets_CONFIG_EXECUTABLE=#{Formula["metacollin/kicadmeta/wxkicad"].bin}/wx-config"
-       else
-         args << "-DwxWidgets_CONFIG_EXECUTABLE=#{Formula["metacollin/kicadmeta/wxkicad"].bin}/wx-config"
-       end
-
       if build.with? "debug"
         args << "-DCMAKE_BUILD_TYPE=Debug"
         args << "-DwxWidgets_USE_DEBUG=ON"
+        args << "-DwxWidgets_CONFIG_EXECUTABLE=#{Formula["metacollin/kicadmeta/wxkdebug"].bin}/wx-config"
       else
         args << "-DCMAKE_BUILD_TYPE=Release"
+        args << "-DwxWidgets_CONFIG_EXECUTABLE=#{Formula["metacollin/kicadmeta/wxkicad"].bin}/wx-config"
       end
 
       if build.with? "python"
@@ -159,8 +175,8 @@ end
       end
 
       if build.with? "openmp"
-        args << "-DCMAKE_C_COMPILER=/usr/local/opt/llvm/bin/clang-3.8"
-        args << "_DCMAKE_CXX_COMPILER=/usr/local/opt/llvm/bin/clang-3.8"
+        args << "-DCMAKE_C_COMPILER=/usr/local/opt/llvm/bin/clang"
+        args << "-DCMAKE_CXX_COMPILER=/usr/local/opt/llvm/bin/clang++"
       else
         args << "-DCMAKE_C_COMPILER=#{ENV.cc}"
         args << "-DCMAKE_CXX_COMPILER=#{ENV.cxx}"

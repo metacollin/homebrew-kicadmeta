@@ -1,4 +1,4 @@
-class Wxkicad < Formula
+class Wxkdebug < Formula
   url "https://downloads.sourceforge.net/project/wxpython/wxPython/3.0.2.0/wxPython-src-3.0.2.0.tar.bz2"
   sha256 "d54129e5fbea4fb8091c87b2980760b72c22a386cb3b9dd2eebc928ef5e8df61"
   homepage "https://kicad-pcb.org"
@@ -20,15 +20,13 @@ class Wxkicad < Formula
  # end
 
   patch :p0 do
-    url "https://gist.githubusercontent.com/metacollin/b6bbb5d54734bea3dcaca1ff22668016/raw/1bdf06a34efba3a67351b034bad27f97f7f712e0/wx_patch_unified.patch"
-    sha256 "d94339ea67b3c0ecef61bcf9abf786627269465df1afa710fed828975602445f"
+     url "https://gist.githubusercontent.com/metacollin/2d5760743df73c939d53/raw/341390839ecd70aba743da64624c90c5d1afcff3/wxp.patch"
+     sha256 "25f40ddc68a182e7dd9f795066910d57e0c53dd4096b85797fbf8e3489685a77"
   end
 
-  if MacOS.version > :elcapitan
-    patch :p1 do
-      url "https://gist.githubusercontent.com/metacollin/232d39cdc5cfd3664a23b18efd50ec4f/raw/465b9368a8a4ad983992ec3842f56e2010d18f1b/wxwidgets-3.0.2_macosx_sierra.patch"
-      sha256 "cf46d8b1ec6e90e8fef458a610ae1ecdc6607e2f4bbd6fb527e83e40c5b5fb24"
-    end
+  patch :p0 do
+    url "https://gist.githubusercontent.com/metacollin/cae8c54d100574f0482b5735561fc08f/raw/dd2bb54eb5e2c77871949e1dc3e25d1ab49afa8f/glpatch.patch"
+    sha256 "24e86101a164633db8354a66be6ec76599750b5d49bd1d3b60fa04ec0d7e66bf"
   end
 
 
@@ -67,15 +65,12 @@ class Wxkicad < Formula
         "--with-zlib=builtin",
         "--with-expat=builtin",
         "--without-liblzma",
+        "--enable-debug",
         "--with-macosx-version-min=#{MacOS.version}",
         "--enable-universal_binary=i386,x86_64",
         "CC=clang",
         "CXX=clang++"
       ]
-
-      if MacOS.version > :elcapitan
-        args << "--disable-mediactrl"
-      end
 
       system "../configure", *args
       system "make", "-j#{ENV.make_jobs}"
