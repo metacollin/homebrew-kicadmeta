@@ -53,6 +53,10 @@ class Wxkicad < Formula
         ENV.libcxx
       end
 
+      if MacOS.version < :yosemite
+        inreplace "src/osx/webview_webkit.mm", "#include <WebKit/WebKitLegacy.h>", "#include <WebKit/WebKit.h>"
+      end
+
       args = [
         "--prefix=#{prefix}",
         "--with-opengl",
