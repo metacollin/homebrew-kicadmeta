@@ -40,6 +40,9 @@ class Wxkicad < Formula
   #  inreplace "src/stc/scintilla/src/Editor.cxx", "if (abs(pt1.x - pt2.x) > 3)", "if (std::abs(pt1.x - pt2.x) > 3)"
   #  inreplace "src/stc/scintilla/src/Editor.cxx", "if (abs(pt1.y - pt2.y) > 3)", "if (std::abs(pt1.y - pt2.y) > 3)"
   #  inreplace "src/stc/scintilla/src/Editor.cxx", "#include <stdlib.h>", "#include <stdlib.h>\n#include <cmath>"
+  if MacOS.version < :yosemite
+    inreplace "src/osx/webview_webkit.mm", "#include <WebKit/WebKitLegacy.h>", "#include <WebKit/WebKit.h>"
+  end
     mkdir "wx-build" do
       ENV['MAC_OS_X_VERSION_MIN_REQUIRED'] = "#{MacOS.version}"
       ENV.append "ARCHFLAGS", "-Wunused-command-line-argument-hard-error-in-future"
@@ -53,9 +56,7 @@ class Wxkicad < Formula
         ENV.libcxx
       end
 
-      if MacOS.version < :yosemite
-        inreplace "src/osx/webview_webkit.mm", "#include <WebKit/WebKitLegacy.h>", "#include <WebKit/WebKit.h>"
-      end
+
 
       args = [
         "--prefix=#{prefix}",
